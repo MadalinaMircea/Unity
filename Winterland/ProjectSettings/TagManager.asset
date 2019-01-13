@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Target
   - Animal
+  - Panel
   layers:
   - Default
   - TransparentFX

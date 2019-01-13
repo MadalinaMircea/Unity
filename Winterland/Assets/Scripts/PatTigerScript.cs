@@ -6,6 +6,7 @@ public class PatTigerScript : MonoBehaviour {
 
     GameObject target;
     public GameObject heart;
+    public AudioSource purring;
 
     void Start()
     {
@@ -26,6 +27,7 @@ public class PatTigerScript : MonoBehaviour {
         // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.
         layerMask = ~layerMask;
         RaycastHit hit;
+
         // Does the ray intersect any objects excluding the player layer
         if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 3, layerMask))
         {
@@ -39,11 +41,16 @@ public class PatTigerScript : MonoBehaviour {
                 if (Input.GetMouseButtonDown(0))
                 {
                     //Pat
-                    Vector3 heartPosition= hit.transform.position;
+                    Vector3 heartPosition = hit.transform.position;
                     heartPosition.y += 1.5f;
                     RandomMoveController rmc = hit.collider.gameObject.GetComponent<RandomMoveController>();
-                    if(!rmc.isAggressive)
+                    if (!rmc.isAggressive)
+                    {
                         Instantiate(heart, heartPosition, Quaternion.Euler(-90, 0, 0));
+                        if (!purring.isPlaying)
+                            purring.Play();
+
+                    }
                 }
             }
         }

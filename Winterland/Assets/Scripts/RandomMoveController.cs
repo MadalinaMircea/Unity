@@ -28,10 +28,18 @@ public class RandomMoveController : MonoBehaviour {
     public bool isAggressive;
     public bool isStopped;
 
+    public GameObject panel;
+    private AudioSource[] allAudioSources;
+    private float timeElapsed = 0f;
+    private float delayBeforeLoading = 2f;
+    private bool isPlayerDead = false;
+
     AudioSource killSound;
 
     void Start()
     {
+        panel.SetActive(false);
+        isPlayerDead = false;
         Vector3 point;
         if(RandomPoint(transform.position, range, out point))
         {
@@ -79,84 +87,105 @@ public class RandomMoveController : MonoBehaviour {
 
     void Update()
     {
-        isStopped = navMeshAgent.isStopped;
-        //Vector3 distance = player.transform.position - transform.position;
-
-        if (Input.GetKeyDown(KeyCode.R))
+        if (isPlayerDead == true)
         {
-            isAggressive = true;
-        }
-
-        float distance = Vector3.Distance(player.transform.position, transform.position);
-
-        if (distance >= 30)
-            isAggressive = false;
-
-        NavMeshHit hit;
-        if (!NavMesh.SamplePosition(player.transform.position, out hit, 1.0f, NavMesh.AllAreas))
-        {
-            isAggressive = false;
-        }
-
-        if (isAggressive)
-        {
-            //Debug.Log("Aggressive");
-            navMeshAgent.SetDestination(player.transform.position);
-            navMeshAgent.speed = runningSpeed;
-            navMeshAgent.isStopped = false;
-            isRunning = true;
-            isWalking = false;
-        }
-
-        if (!isAggressive)
-        {
-            //Debug.Log(player.transform.position + " " + transform.position + " " + distance);
-
-            if (Mathf.Abs(distance) <= 5)
+            allAudioSources = FindObjectsOfType(typeof(AudioSource)) as AudioSource[];
+            foreach (AudioSource audioS in allAudioSources)
             {
-                navMeshAgent.isStopped = true;
-                //Debug.Log("Player close");
+                audioS.Stop();
             }
-            else
+            timeElapsed += Time.deltaTime;
+            if (timeElapsed > delayBeforeLoading)
             {
-                navMeshAgent.isStopped = false;
-                float shouldWalk = 0;
-                if (!isInCoroutine)
-                {
-                    shouldWalk = Mathf.Floor(Random.Range(0, 100));
-                    if (shouldWalk == 1)
-                    {
-                        StartCoroutine(DoSomething());
-                    }
-                    else
-                    {
-                        navMeshAgent.isStopped = true;
-                        StartCoroutine(Wait());
-                    }
-                    //Debug.Log((shouldWalk <= 2 ? "true" : "false") + " " + navMeshAgent.isStopped);
-                }
-
+                Application.LoadLevel(Application.loadedLevel);
             }
-        }
-
-        
-
-        if (Mathf.Abs(Vector3.Distance(transform.position, previousPosition)) <= 0.001)
-        {
-            isWalking = false;
-            isRunning = false;
         }
         else
         {
-            if (!isAggressive)
-                isWalking = true;
-            else
+            isStopped = navMeshAgent.isStopped;
+            //Vector3 distance = player.transform.position - transform.position;
+
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                isAggressive = true;
+            }
+
+            float distance = Vector3.Distance(player.transform.position, transform.position);
+
+            if (distance <= 2.5f && isAggressive == true)
+            {
+                panel.SetActive(true);
+                timeElapsed = 0f;
+                isPlayerDead = true;
+            }
+
+            if (distance >= 30)
+                isAggressive = false;
+
+            NavMeshHit hit;
+            if (!NavMesh.SamplePosition(player.transform.position, out hit, 1.0f, NavMesh.AllAreas))
+            {
+                isAggressive = false;
+            }
+
+            if (isAggressive)
+            {
+                //Debug.Log("Aggressive");
+                navMeshAgent.SetDestination(player.transform.position);
+                navMeshAgent.speed = runningSpeed;
+                navMeshAgent.isStopped = false;
                 isRunning = true;
+                isWalking = false;
+            }
+
+            if (!isAggressive)
+            {
+                //Debug.Log(player.transform.position + " " + transform.position + " " + distance);
+
+                if (Mathf.Abs(distance) <= 5)
+                {
+                    navMeshAgent.isStopped = true;
+                    //Debug.Log("Player close");
+                }
+                else
+                {
+                    navMeshAgent.isStopped = false;
+                    float shouldWalk = 0;
+                    if (!isInCoroutine)
+                    {
+                        shouldWalk = Mathf.Floor(Random.Range(0, 100));
+                        if (shouldWalk == 1)
+                        {
+                            StartCoroutine(DoSomething());
+                        }
+                        else
+                        {
+                            navMeshAgent.isStopped = true;
+                            StartCoroutine(Wait());
+                        }
+                        //Debug.Log((shouldWalk <= 2 ? "true" : "false") + " " + navMeshAgent.isStopped);
+                    }
+
+                }
+            }
+
+            if (Mathf.Abs(Vector3.Distance(transform.position, previousPosition)) <= 0.001)
+            {
+                isWalking = false;
+                isRunning = false;
+            }
+            else
+            {
+                if (!isAggressive)
+                    isWalking = true;
+                else
+                    isRunning = true;
+            }
+
+            ModifyParameters();
+
+            previousPosition = transform.position;
         }
-
-        ModifyParameters();
-
-        previousPosition = transform.position;
     }
 
     Vector3 GenerateRandomPosition()
